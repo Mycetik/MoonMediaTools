@@ -12,6 +12,19 @@ DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/$NAME"
 BIN_DIR="$DATA_DIR/bin"
 PY_DIR="$DATA_DIR/python"
 
+if [ "$EUID" -eq 0 ]; then
+
+    if [ -n "$SUDO_USER" ]; then
+        TARGET_USER="$SUDO_USER"
+    else
+        TARGET_USER=$(id -nu 1000)
+    fi
+
+    exec sudo -u "$TARGET_USER" "$0" "$@"
+    
+    exit 1 
+fi
+
 LOCK_FILE="/tmp/${NAME}.lock"
 exec 9>"$LOCK_FILE"
 flock -n 9 || {
@@ -93,7 +106,7 @@ FREE_SPACE_KB=$(df -k "$DATA_DIR" | awk 'NR==2 {print $4}')
 REQUIRED_KB=1048576
 
 if [ "$FREE_SPACE_KB" -lt "$REQUIRED_KB" ]; then
-    show_error_window "Launching the program when disk space is insufficient is dangerous. Launch cancelled."
+    show_error_window "Launching the program when disk space is insufficient is dangerous. Launch cancelled"
     exit 1
 fi
 
@@ -162,7 +175,7 @@ elif [ $PYTHON_EXIT_CODE -eq 139 ]; then
     FINAL_CODE=139
 
 elif [ $PYTHON_EXIT_CODE -eq 134 ]; then
-    fatal "Aborted (SIGABRT 134)."
+    fatal "Aborted (SIGABRT 134)"
     FINAL_CODE=134
 
 else
