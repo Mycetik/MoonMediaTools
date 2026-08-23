@@ -1,0 +1,4 @@
+yaml :: static
+yt-dlp[default] :: dynamic
+curl-cffi :: static
+PyQt6 :: static

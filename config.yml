@@ -1,0 +1,4 @@
+program:
+  version: "1.0.0"
+  displayname: "MoonMediaTools"
+  verbose_ytdlp: false
