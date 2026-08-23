@@ -11,6 +11,7 @@ PROGRAM_DIR="$APP_DIR"
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/$NAME"
 BIN_DIR="$DATA_DIR/bin"
 PY_DIR="$DATA_DIR/python"
+CURL_PATH="curl/curl-amd64"
 
 if [ "$EUID" -eq 0 ]; then
 
@@ -110,6 +111,13 @@ if [ "$FREE_SPACE_KB" -lt "$REQUIRED_KB" ]; then
     exit 1
 fi
 
+if [ -f "$CURL_PATH" ]; then
+    chmod +x "$CURL_PATH" || {
+        show_error_window "Permissions error $CURL_PATH"
+        exit 1
+    }
+fi
+
 SETUP_MARKER="$DATA_DIR/.setup_completed"
 
 if [ ! -f "$SETUP_MARKER" ]; then
@@ -117,19 +125,23 @@ if [ ! -f "$SETUP_MARKER" ]; then
     
     echo "Downloading FFmpeg..."
     FFMPEG_URL="https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"
-    curl -L "$FFMPEG_URL" | tar -xJ --strip-components=1 -C "$BIN_DIR" --wildcards '*/ffmpeg' '*/ffprobe'
+    $CURL_PATH -L "$FFMPEG_URL" | tar -xJ --strip-components=1 -C "$BIN_DIR" --wildcards '*/ffmpeg' '*/ffprobe'
     chmod +x "$BIN_DIR/ffmpeg" "$BIN_DIR/ffprobe"
 
     echo "Downloading Python 3.12..."
     PYTHON_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-x86_64-unknown-linux-gnu-install_only.tar.gz"
-    curl -L "$PYTHON_URL" | tar -xz --strip-components=1 -C "$PY_DIR"
+    $CURL_PATH -L "$PYTHON_URL" | tar -xz --strip-components=1 -C "$PY_DIR"
 
     export PATH="$BIN_DIR:$PY_DIR/bin:$PATH"
     export PYTHON_EXEC="python3"
 
+    echo "Initializing pip..."
+    $PYTHON_EXEC -m ensurepip --default-pip
+    $PYTHON_EXEC -m pip install --upgrade pip
+
     echo "Downloading Deno"
     DENO_URL="https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip"
-    curl -L "$DENO_URL" -o "$BIN_DIR/deno.zip"
+    $CURL_PATH -L "$DENO_URL" -o "$BIN_DIR/deno.zip"
     $PYTHON_EXEC -c "import zipfile; zipfile.ZipFile('$BIN_DIR/deno.zip', 'r').extractall('$BIN_DIR')"
     rm "$BIN_DIR/deno.zip"
     chmod +x "$BIN_DIR/deno"
@@ -144,7 +156,7 @@ fi
 if [ ! -f "$BIN_DIR/yt-dlp-nightly" ]; then
     echo "Downloading yt-dlp nightly build..."
     NIGHTLY_URL="https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp_linux"
-    curl -L "$NIGHTLY_URL" -o "$BIN_DIR/yt-dlp-nightly"
+    $CURL_PATH -L "$NIGHTLY_URL" -o "$BIN_DIR/yt-dlp-nightly"
     chmod +x "$BIN_DIR/yt-dlp-nightly"
 else
     "$BIN_DIR/yt-dlp-nightly" --update-to nightly > /dev/null 2>&1
