@@ -170,6 +170,10 @@ fi
 
 close_loading_window
 export XLIB_SKIP_ARGB_VISUALS=1
+
+unset QT_PLUGIN_PATH
+unset QT_QPA_PLATFORM_PLUGIN_PATH
+
 $PYTHON_EXEC $PROGRAM_DIR/main.py
 PYTHON_EXIT_CODE=$?
 
@@ -183,7 +187,7 @@ elif [ $PYTHON_EXIT_CODE -eq 13 ]; then
     FINAL_CODE=1
 
 elif [ $PYTHON_EXIT_CODE -eq 139 ]; then
-    fatal "Segmentation Fault (SIGSEGV 139)"
+    fatal "Segmentation Fault (SEGFAULT 139)"
     FINAL_CODE=139
 
 elif [ $PYTHON_EXIT_CODE -eq 134 ]; then
